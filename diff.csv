@@ -1,28 +1,19 @@
 日期,锻炼名称,运动名称,设置顺序,重量,次,距离,秒,备注,锻炼备注,id
-2019-06-03 19:45:42,Evening Workout,Arnold Press (Dumbbell),1,10.0,8,0,0,,,20190603194542ArnoldPressDumbbell1
-2019-06-03 19:45:42,Evening Workout,Arnold Press (Dumbbell),2,10.0,8,0,0,,,20190603194542ArnoldPressDumbbell2
-2019-06-03 19:45:42,Evening Workout,Bent Over Row (Barbell),1,20.0,7,0,0,,,20190603194542BentOverRowBarbell1
-2019-06-07 20:38:55,周末,Squat (Bodyweight),1,2.5,10,0,0,,,20190607203855SquatBodyweight1
-2019-06-07 20:38:55,周末,Squat (Bodyweight),2,2.5,10,0,0,,,20190607203855SquatBodyweight2
-2019-06-07 20:38:55,周末,Jump Squat,1,0.0,20,0,0,,,20190607203855JumpSquat1
-2019-06-07 20:38:55,周末,Jump Squat,2,0.0,20,0,0,,,20190607203855JumpSquat2
-2019-06-07 20:38:55,周末,Front Squat (Barbell),1,10.0,8,0,0,,,20190607203855FrontSquatBarbell1
-2019-06-07 20:38:55,周末,Front Squat (Barbell),2,10.0,8,0,0,,,20190607203855FrontSquatBarbell2
-2019-06-07 20:38:55,周末,Front Squat (Barbell),3,20.0,8,0,0,,,20190607203855FrontSquatBarbell3
-2019-06-07 20:38:55,周末,Squat (Barbell),1,20.0,8,0,0,,,20190607203855SquatBarbell1
-2019-06-07 20:38:55,周末,Squat (Barbell),2,20.0,8,0,0,,,20190607203855SquatBarbell2
-2019-06-07 20:38:55,周末,Squat (Barbell),3,20.0,8,0,0,,,20190607203855SquatBarbell3
-2019-06-07 20:38:55,周末,Squat (Barbell),4,20.0,8,0,0,,,20190607203855SquatBarbell4
-2019-06-07 20:38:55,周末,Squat (Barbell),5,20.0,8,0,0,,,20190607203855SquatBarbell5
-2019-06-07 20:38:55,周末,Hip Thrust (Bodyweight),1,0.0,20,0,0,,,20190607203855HipThrustBodyweight1
-2019-06-07 20:38:55,周末,Hip Thrust (Bodyweight),2,0.0,20,0,0,,,20190607203855HipThrustBodyweight2
-2019-06-07 20:38:55,周末,Hip Thrust (Bodyweight),3,0.0,20,0,0,,,20190607203855HipThrustBodyweight3
-2019-06-07 20:38:55,周末,Jackknife Sit Up,1,0.0,10,0,0,,,20190607203855JackknifeSitUp1
-2019-06-07 20:38:55,周末,Jackknife Sit Up,2,0.0,10,0,0,,,20190607203855JackknifeSitUp2
-2019-06-07 20:38:55,周末,Jackknife Sit Up,3,0.0,10,0,0,,,20190607203855JackknifeSitUp3
-2019-06-07 20:38:55,周末,Crunch,1,0.0,15,0,0,,,20190607203855Crunch1
-2019-06-07 20:38:55,周末,Crunch,2,0.0,15,0,0,,,20190607203855Crunch2
-2019-06-07 20:38:55,周末,Crunch,3,0.0,15,0,0,,,20190607203855Crunch3
-2019-06-07 20:38:55,周末,Cross Body Crunch,1,0.0,10,0,0,,,20190607203855CrossBodyCrunch1
-2019-06-07 20:38:55,周末,Cross Body Crunch,2,0.0,10,0,0,,,20190607203855CrossBodyCrunch2
-2019-06-07 20:38:55,周末,Cross Body Crunch,3,0.0,10,0,0,,,20190607203855CrossBodyCrunch3
+2019-06-10 18:13:04,工作日-上身,Overhead Press (Dumbbell),1,10.0,8,0,0,,,20190610181304OverheadPressDumbbell1
+2019-06-10 18:13:04,工作日-上身,Overhead Press (Dumbbell),2,10.0,8,0,0,,,20190610181304OverheadPressDumbbell2
+2019-06-10 18:13:04,工作日-上身,Overhead Press (Dumbbell),3,10.0,8,0,0,,,20190610181304OverheadPressDumbbell3
+2019-06-10 18:13:04,工作日-上身,Arnold Press (Dumbbell),1,10.0,8,0,0,,,20190610181304ArnoldPressDumbbell1
+2019-06-10 18:13:04,工作日-上身,Arnold Press (Dumbbell),2,10.0,8,0,0,,,20190610181304ArnoldPressDumbbell2
+2019-06-10 18:13:04,工作日-上身,Arnold Press (Dumbbell),3,10.0,8,0,0,,,20190610181304ArnoldPressDumbbell3
+2019-06-10 18:13:04,工作日-上身,Bent Over Row (Dumbbell),1,10.0,10,0,0,,,20190610181304BentOverRowDumbbell1
+2019-06-10 18:13:04,工作日-上身,Bent Over Row (Dumbbell),2,10.0,10,0,0,,,20190610181304BentOverRowDumbbell2
+2019-06-10 18:13:04,工作日-上身,Bent Over Row (Dumbbell),3,10.0,10,0,0,,,20190610181304BentOverRowDumbbell3
+2019-06-10 18:13:04,工作日-上身,Bent Over Row (Dumbbell),4,10.0,10,0,0,,,20190610181304BentOverRowDumbbell4
+2019-06-10 18:13:04,工作日-上身,Bicep Curl (Dumbbell),1,10.0,8,0,0,,,20190610181304BicepCurlDumbbell1
+2019-06-10 18:13:04,工作日-上身,Bicep Curl (Dumbbell),2,10.0,8,0,0,,,20190610181304BicepCurlDumbbell2
+2019-06-10 18:13:04,工作日-上身,Bicep Curl (Dumbbell),3,10.0,8,0,0,,,20190610181304BicepCurlDumbbell3
+2019-06-10 18:13:04,工作日-上身,Bicep Curl (Dumbbell),4,10.0,8,0,0,,,20190610181304BicepCurlDumbbell4
+2019-06-10 18:13:04,工作日-上身,Bent Over One Arm Row (Dumbbell),1,10.0,8,0,0,,,20190610181304BentOverOneArmRowDumbbell1
+2019-06-10 18:13:04,工作日-上身,Bent Over One Arm Row (Dumbbell),2,10.0,8,0,0,,,20190610181304BentOverOneArmRowDumbbell2
+2019-06-10 18:13:04,工作日-上身,Bent Over One Arm Row (Dumbbell),3,10.0,8,0,0,,,20190610181304BentOverOneArmRowDumbbell3
+2019-06-10 18:13:04,工作日-上身,Stretching,1,0.0,0,0,30,,,20190610181304Stretching1
