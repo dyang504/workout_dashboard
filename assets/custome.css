@@ -1,9 +1,32 @@
+:root {
+    --white: #F1EEF6;
+    --black: #1E152A;
+    --green: #8CFFBA;
+    --dark-grey: #373E49;
+    --grey: #9099AB;
+    --red: #FF5A33;
+}
 html{
     background-color:#1E152A;
     margin-top:0
 }
-body,div{ background-color:#1E152A;margin:0}
+body,div,#time_trend,#sports_potion_barplot{ background-color:#1E152A;margin:0}
 body{
     height: 100%;
     width:100%
+}
+h2{
+    color:var(--green);
+    padding-top: 20;
+    text-align: center;
+}
+#table{
+    padding-left:5%;
+}
+#work_out_intensity_gauge{
+    padding-left: 30%;
+}
+.summary{
+    color:var(--white);
+    padding-left: 30%;
 }
