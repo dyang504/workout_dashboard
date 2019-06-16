@@ -125,6 +125,7 @@ external_stylesheets = ['https://unpkg.com/purecss@1.0.0/build/pure-min.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+server = app.server
 
 def generate_fact():
     days_query = 'SELECT COUNT(DISTINCT "日期") AS days FROM train_record'
