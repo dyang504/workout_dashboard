@@ -8,6 +8,8 @@ from dash.dependencies import Input, Output
 import pandas as pd
 from dash_table.Format import Format, Scheme
 from sqlalchemy import create_engine
+import plotly.express as px
+from plotly.subplots import make_subplots
 
 # TODO
 # Unify the languages
@@ -28,85 +30,44 @@ def fetch_data(q: str, conn) -> pd.DataFrame:
     return pd.read_sql(sql=q, con=conn)
 
 
-def query_date(conn,hoverData):
+def query_date(conn,clickData):
     q = ''
-    if hoverData:
-        sport = hoverData['points'][0]['x']
-        q = f'''SELECT "日期",
-                    SUM("次")AS "合计次数"
+    if clickData:
+        sport = clickData['points'][0]['x']
+        q = f'''SELECT "Date",
+                    AVG("Reps")AS "Reps Sum",AVG(Weight) AS "Avg Weight"
                 FROM train_record
-                WHERE "运动名称" = "{sport}"
-                GROUP BY "日期"
-                ORDER BY "日期" '''
+                WHERE "Exercise Name" = "{sport}"
+                GROUP BY "Date"
+                ORDER BY "Date" '''
     else:
-        q =  '''SELECT "日期",
-                    SUM("次")AS "合计次数"
+        q =  '''SELECT "Date",AVG(Weight) AS 'Avg Weight',
+                    AVG("Reps")AS "Reps Sum"
                 FROM train_record
-                GROUP BY "日期"
-                ORDER BY "日期" '''
+                GROUP BY "Date"
+                ORDER BY "Date" '''
     return fetch_data(q, conn)
 
 
-def query_sport_name(conn,hoverData):
+def query_sport_name(conn,clickData):
     q=''
-    if hoverData:
-        sport_name = hoverData['points'][0]['x']
-        q = f'''SELECT "运动名称",
-                            sum("次")AS "合计次数"
+    if clickData:
+        sport_name = clickData['points'][0]['x']
+        q = f'''SELECT "Exercise Name",
+                            sum("Reps")AS "Reps Sum", AVG(Weight) AS "Avg Weight"
                             FROM train_record
-                            WHERE "次" > 0 AND "日期" = "{sport_name}"
-                            GROUP BY "运动名称"
-                            ORDER BY sum("次")DESC '''
+                            WHERE "Reps" > 0 AND "Date" = "{sport_name}"
+                            GROUP BY "Exercise Name"
+                            ORDER BY sum("Reps")DESC '''
     else:
-        q = '''SELECT "运动名称",
-                            sum("次")AS "合计次数"
+        q = '''SELECT "Exercise Name",
+                            sum("Reps") AS "Reps Sum", AVG(Weight) AS 'Avg Weight'
                             FROM train_record
-                            WHERE "次" > 0
-                            GROUP BY "运动名称"
-                            ORDER BY sum("次")DESC '''
+                            WHERE "Reps" > 0
+                            GROUP BY "Exercise Name"
+                            ORDER BY sum("Reps") DESC '''
     return fetch_data(q, conn)
 
-table_query = '''
-                SELECT "运动名称",
-                count("运动名称") / count(DISTINCT "日期")AS "Average_Sets",
-                sum("次")AS "合计次数",
-                AVG("重量")AS "平均重量(单位：KG)"
-                FROM train_record
-                WHERE "次" > 0
-                GROUP BY "运动名称"
-                ORDER BY sum("次") DESC
-                '''
-
-table_df = fetch_data(table_query, conn)
-
-
-def query_meter(conn, select_date):
-    q= ''
-    if select_date:
-        date = select_date['points'][0]['x']
-        q = f'''
-        SELECT  AVG(Avg_Left_Weight/Avg_Repeats)  AS Intensity
-        FROM (SELECT "运动名称",
-                SUM("次") / count("日期") AS "Avg_Repeats",
-                SUM("重量") / count("日期") AS "Avg_Left_Weight"
-            FROM train_record
-            WHERE "次" > 0 AND "重量" > 0 AND "日期" = "{date}"
-            GROUP BY "运动名称"
-            ORDER BY sum("次") DESC)
-    '''
-    else:
-        q = '''
-            SELECT  AVG(Avg_Left_Weight/Avg_Repeats)  AS Intensity
-            FROM (SELECT "运动名称",
-                    SUM("次") / count("日期") AS "Avg_Repeats",
-                    SUM("重量") / count("日期") AS "Avg_Left_Weight"
-                FROM train_record
-                WHERE "次" > 0 AND "重量" > 0
-                GROUP BY "运动名称"
-                ORDER BY sum("次") DESC)
-        '''
-    dataframe = fetch_data(q, conn)
-    return dataframe.at[0,'Intensity']
 
 
 ##########
@@ -114,9 +75,12 @@ def query_meter(conn, select_date):
 ##########
 
 color_scheme = {
-    'white': "#F1EEF6",
-    "black": '#1E152A',
-    'green': '#8CFFBA',
+    'white': "#FFF",
+    "black": '#011627',
+    'black pearl':'#011627',
+    'snappire': '#293F99',
+    'cerulean':'#19ACE3',
+    'dark cerulearn':'#004777',
     'dark_grey': '#373E49',
     'grey': '#9099AB',
     'red': '#FF5A33'
@@ -127,148 +91,159 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 server = app.server
 
+
+
 def generate_fact():
-    days_query = 'SELECT COUNT(DISTINCT "日期") AS days FROM train_record'
+    days_query = 'SELECT COUNT(DISTINCT "Date") AS days FROM train_record'
     days = fetch_data(days_query,conn).at[0,"days"]
     return days
 
+def get_favorite_excercise():
+  query = 'SELECT "Exercise Name",COUNT("Exercise Name")\
+                FROM (SELECT date(Date), "Exercise Name"\
+            FROM train_record GROUP BY date(Date), "Exercise Name") \
+            GROUP BY  "Exercise Name" \
+            ORDER BY  COUNT("Exercise Name") DESC'
+  excercise = fetch_data(query,conn).at[0,'Exercise Name']
+  return excercise
 
-def generate_table(dataframe):
-    return dash_table.DataTable(id='table',
-                                columns=[{
-                                    'name': '运动名称',
-                                    'id': '运动名称',
-                                    'type': 'text'
-                                }, {
-                                    'name':
-                                    'Average_Sets',
-                                    'id': 'Average_Sets',
-                                    'type': 'numeric',
-                                    'format':
-                                    Format(precision=0, scheme=Scheme.fixed)
-                                }, {
-                                    'name':
-                                    '合计次数',
-                                    'id':
-                                    '合计次数',
-                                    'type':
-                                    'numeric',
-                                    'format':
-                                    Format(precision=0, scheme=Scheme.fixed)
-                                }, {
-                                    'name':
-                                    '平均重量(单位：KG)',
-                                    'id':
-                                    '平均重量(单位：KG)',
-                                    'type':
-                                    'numeric',
-                                    'format':
-                                    Format(precision=0, scheme=Scheme.fixed)
-                                }],
-                                data=dataframe.to_dict('records'),
-                                style_as_list_view=True,
-                                sorting=True,
-                                style_table={
-                                    'maxHeight': 300,
-                                    'whiteSpace': 'normal',
-                                    'textOverflow': 'ellipsis',
-                                },
-                                style_cell={
-                                    'backgroundColor': color_scheme['black'],
-                                    'color': color_scheme['white']
-                                },
-                                n_fixed_rows=1,
-                                style_data_conditional=[{
-                                    'if': {
-                                        'column_id': '运动名称'
-                                    },
-                                    'width': '50px'
-                                }, {
-                                    'if': {
-                                        'column_id': 'Average_Sets'
-                                    },
-                                    'width': '50px'
-                                }, {
-                                    'if': {
-                                        'column_id': '合计次数'
-                                    },
-                                    'width': '100px'
-                                }, {
-                                    'if': {
-                                        'column_id': '平均重量(单位：KG)'
-                                    },
-                                    'width': '80px'
-                                }],
-                                virtualization=True,
-                                pagination_mode=False)
+def get_favorite_workout_plan():
+  query = 'SELECT "Workout Name",COUNT("Workout Name")\
+                FROM (SELECT date(Date), "Workout Name"\
+            FROM train_record GROUP BY date(Date), "Workout Name") \
+            GROUP BY  "Workout Name" \
+            ORDER BY  COUNT("Workout Name") DESC'
+  workout = fetch_data(query,conn).at[0,'Workout Name']
+  return workout
 
+def get_max_weight():
+  query = 'SELECT Weight\
+            FROM train_record ORDER BY Weight DESC'
+  weight = fetch_data(query,conn).at[1,'Weight']
+  return weight
+
+# def get_
+  
+def gen_radar():
+  df = pd.DataFrame(dict(
+    r=[1, 5, 2, 2, 3],
+    theta=['processing cost','mechanical properties','chemical stability', 
+           'thermal stability', 'device integration']))
+  radar = px.line_polar(df, r='r', theta='theta', line_close=True,width=400,height=300)
+  radar.update_traces(fill='toself')
+  return radar
+
+def get_heatmap_data():
+
+  query='SELECT date(Date) AS Date,strftime("%H",Date) AS Hour, strftime("%w",Date) AS daysofweek, sum("Reps") AS "Reps Sum" \
+              FROM train_record GROUP BY date(Date),Hour,daysofweek ORDER BY date(Date)'
+  heatmap_data = fetch_data(query,conn)
+  return heatmap_data
+
+def gen_heatmap():
+  heatmap_source = get_heatmap_data()
+  heatmap_source['Date'] = pd.to_datetime(heatmap_source['Date'])
+  heatmap_pivot = pd.pivot_table(heatmap_source,index=['Hour'],columns=['daysofweek'],values=['Reps Sum'],aggfunc='count').fillna(0)
+  heatmap_pivot = heatmap_pivot.reset_index()
+  fig = go.Figure(data=go.Heatmap(
+                   z=[list(heatmap_pivot.loc[:,('Reps Sum','0')].values),\
+                   list(heatmap_pivot.loc[:,('Reps Sum','1')].values),\
+                   list(heatmap_pivot.loc[:,('Reps Sum','2')].values), \
+                   list(heatmap_pivot.loc[:,('Reps Sum','3')].values),\
+                   list(heatmap_pivot.loc[:,('Reps Sum','4')].values),\
+                   list(heatmap_pivot.loc[:,('Reps Sum','5')].values), \
+                   list(heatmap_pivot.loc[:,('Reps Sum','6')].values)],
+                   x= [str(i) + ':00' for i in heatmap_pivot['Hour'].tolist()], 
+                   # x = [str(i) for i in heatmap_pivot.index.get_level_values('weekofmonth').tolist()],
+                   y=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday','Saturday','Sunday'],
+                   colorscale=['#D0DCED',color_scheme['cerulean'],color_scheme['black pearl']]),\
+                   layout=go.Layout(title='Workout at which time in a day',width=600,height=320))
+  return fig
 
 app.layout = html.Div(children=[
-    html.H2(children='Workout Summary'),
+  html.Div([
+    html.H2(children='Weight Training Analysis'),
+    html.H2(children='Workout Dashboard',className='subtitle'),
+    ],className='banner'),
     html.Div([
-        html.Div(generate_table(table_df), className='pure-u-1-2'),
-        html.Div(children=[
-            daq.DarkThemeProvider(theme={
-                'dark': False,
-                'detail': color_scheme['white'],
-                'primary': color_scheme['white'],
-                'secondary': color_scheme['white']
-            },
-                                  children=daq.Gauge(
-                                      id='work_out_intensity_gauge',
-                                      min=0,
-                                      max=5,
-                                      color=color_scheme['green'])),
-            html.Span(children=f"You've complete {generate_fact()} days workout.",
-                      className='summary')
-        ],
-                 className='pure-u-1-2')
+      html.Div([
+        html.Div(children=[html.Div(children="This dashboard based data of traing records \
+                                              of a Strong App user, showing instense, frequence, \
+                                              and preference of taining in a 3 years time interval. "),
+                          html.Div([
+                                 html.Div(f"The favorite exercise: {get_favorite_excercise()}", className='statstext'),
+                                 html.Div(f"The favorite Workout Plan: {get_favorite_workout_plan()}", className='statstext'),
+                                 html.Div(f"The max lift weight: {get_max_weight():.0f} lb", className='statstext')
+                            ],className='stats')
+                           
+                           ], className='pure-u-1-5 summary'),
+        html.Div(children=[dcc.Graph(id='heatmap',figure=gen_heatmap())], className='pure-u-3-5 first_chart')
     ],
              className='pure-g'),
     html.Div(children=[
-        html.Div(dcc.Graph(id='time_trend',figure={'layout':{'plot_bgcolor':color_scheme['black'],
-                                      'paper_bgcolor':color_scheme['black']}}), className='pure-u-1-2'),
+        html.Div(dcc.Graph(id='time_trend',figure={'layout':{'plot_bgcolor':color_scheme['white'],
+                                      'paper_bgcolor':color_scheme['white']}}), className='pure-u-1 second_chart'),
         html.Div(dcc.Graph(id='sports_potion_barplot',figure={'layout':{'plot_bgcolor':color_scheme['black'],
-                                      'paper_bgcolor':color_scheme['black']}}), className='pure-u-1-2')
+                                      'paper_bgcolor':color_scheme['white']}}), className='pure-u-1 third_chart')
     ],
-             className='pure-g')
-])
+             className='pure-g'),
+    
+],className='container')
+
+      ])
+    
 
 # CallBacks
-
 
 # Customerize the bar plot interaction
 @app.callback(
     Output(component_id='sports_potion_barplot', component_property='figure'),
-    [
-        Input(component_id='table', component_property='data'),
-        Input('time_trend', 'hoverData')
+    [Input('time_trend', 'clickData')
     ])
-def generate_bar_graph(data, hoverData):
-    dataframe = query_sport_name(conn, hoverData)
-    return go.Figure(data=[
-        go.Bar(x=dataframe['运动名称'].tolist(),
-               y=dataframe['合计次数'].tolist(),
+def generate_bar_graph(clickData):
+    dataframe = query_sport_name(conn, clickData)
+    bar = make_subplots(specs=[[{"secondary_y": True}]])
+    fig = go.Figure(
+              data=[
+
+              ]
+      )
+    bar.add_trace(
+        go.Bar(x=dataframe['Exercise Name'].tolist(),
+               y=dataframe['Reps Sum'].tolist(),
                width=0.55,
-               marker={'color': color_scheme['green']})
-    ],
-                     layout=go.Layout(title='Total Repeats of Each Sports',
-                                      font={'color': color_scheme['white']},
-                                      plot_bgcolor=color_scheme['black'],
-                                      paper_bgcolor=color_scheme['black'],
+               marker={'color': color_scheme['cerulean']}),
+        secondary_y=False
+      ) 
+    # bar.add_trace(
+    #     go.Bar(x=dataframe['Exercise Name'].tolist(),
+    #            y=dataframe['Avg Weight'].tolist(),
+    #            width=0.55,
+    #            marker={'color': color_scheme['dark cerulean']}),
+    #     secondary_y=True
+    #   ) 
+
+    bar.update_layout(
+      barmode='group',
+      legend_orientation="h",
+      title=f"Total Repeats of Each Exercises",
+      width=900,
+                                      font={'color': color_scheme['black']},
+                                      plot_bgcolor=color_scheme['white'],
+                                      paper_bgcolor=color_scheme['white'],
                                       xaxis={
-                                          'title': '运动名称',
+                                          'title': 'Exercise Name',
                                           'tickfont': {
                                               'size': 8
                                           },
                                           'showgrid': False,
-                                          'linewidth': 3,
-                                          'linecolor': color_scheme['grey']
+                                          'linewidth': 1,
+                                          'linecolor': color_scheme['black']
                                       },
                                       yaxis={
-                                          'title': '重复次数',
-                                          'linewidth': 3,
-                                          'linecolor': color_scheme['grey'],
+                                          'title': 'Reps Sum',
+                                          'linewidth': 1,
+                                          'linecolor': color_scheme['black'],
                                           'tickfont': {
                                               'size': 10
                                           },
@@ -278,60 +253,80 @@ def generate_bar_graph(data, hoverData):
                                       height=400,
                                       autosize=True,
                                       bargap=0.1,
-                                      hovermode='closest'))
+                                      hovermode='closest'
+
+      )     
+    if clickData:
+      bar.update_layout(title=f"Exercises of {clickData['points'][0]['x']}")
+
+    return bar
 
 
-@app.callback(
-    Output(component_id='work_out_intensity_gauge',
-           component_property='value'),
-    [Input(component_id='time_trend', component_property='hoverData')])
-def update_gauge(hoverData):  # we don 't want the boundary now
-    return query_meter(conn, hoverData)
 
 
 @app.callback(Output(component_id='time_trend', component_property='figure'), 
-        [Input(component_id='sports_potion_barplot', component_property='hoverData')
+        [Input(component_id='sports_potion_barplot', component_property='clickData')
 ])
-def update_time_trend(hoverData):
-    dataframe = query_date(conn,hoverData)
-    return go.Figure(data=[
+def update_time_trend(clickData):
+    dataframe = query_date(conn,clickData)
+    time_fig = make_subplots(specs=[[{"secondary_y": True}]])
+    time_fig.add_trace(
         go.Scatter({
-            'x': dataframe["日期"].tolist(),
-            'y': dataframe["合计次数"].tolist(),
+            'x': dataframe["Date"].tolist(),
+            'y': dataframe["Reps Sum"].tolist(),
             'type': 'line',
-            'name': '次数累计',
+             'mode':"lines",
+            'name': 'Avg Reps',
+            'line':{'width':1,'color':color_scheme['cerulean']},
             'marker': {
-                'color': color_scheme['green']
+                'color': color_scheme['snappire']
             }
-        })
-    ],
-                     layout=go.Layout({
-                         'plot_bgcolor': color_scheme['black'],
-                         'paper_bgcolor': color_scheme['black'],
-                         'autosize': False,
-                         'title': 'Total Repeats Trending',
-                         'font': {
-                             'color': color_scheme['white']
+        }),
+        secondary_y=False
+      )
+    
+    time_fig.add_trace(go.Scatter(x=dataframe["Date"].tolist(), 
+                                  y=dataframe["Avg Weight"].tolist(),
+                                  line={'width':1,'color':color_scheme['dark cerulearn']}, 
+                                    name="Avg Weight"),
+                      secondary_y=True)
+    time_fig.update_layout(
+                         legend_orientation="h",
+                         plot_bgcolor= color_scheme['white'],
+                         paper_bgcolor= color_scheme['white'],
+                         autosize= False,
+                         title= "Total Repeats Trending",
+                         font= {
+                             'color': color_scheme['black']
                          },
-                         'height': 400,
-                         'xaxis': {
-                             'title': 'Workout Date',
+                         width=900,
+                         height= 400,
+                         xaxis= {
+                             'title': 'Date',
                              'showgrid': False,
                              'showline': True,
-                             'linewidth': 3,
-                             'linecolor': color_scheme['grey'],
+                             'linewidth': 1,
+                             'linecolor': color_scheme['black'],
                              'tickformat': '%d %b %Y'
                          },
-                         'yaxis': {
-                             'title': 'Repeat X Sets',
-                             'showgrid': False,
+                         yaxis={
+                         'title': 'Avg Reps',
                              'showline': True,
-                             'linewidth': 3,
-                             'linecolor': color_scheme['grey']
+                             'linecolor': color_scheme['black'],
+                         'linewidth': 1,
                          },
-                         'hovermode': 'closest'
-                     }))
+                         yaxis2={
+                             'showline': True,
+                         'title': 'Avg Weight',
+                         'linecolor': color_scheme['black'],
+                         'linewidth': 1,
+                         },
+                         hovermode='closest')
+    if clickData:
+      time_fig.update_layout(title= f"Repeats Trending of {clickData['points'][0]['x']}  ")
+    return time_fig
 
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+

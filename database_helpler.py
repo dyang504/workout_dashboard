@@ -44,7 +44,7 @@ def update_data(path, conn):
     df.to_sql('train_record', conn, if_exists='append')
 
 
-# update_data('diff.csv', conn)
+update_data('weightlifting_721_workouts.csv', conn)
 
 
 def query_meter(conn):
@@ -70,5 +70,3 @@ def query_meter_easy(conn):
     '''
     return pd.read_sql(q, conn)
 
-
-print(query_meter(conn))

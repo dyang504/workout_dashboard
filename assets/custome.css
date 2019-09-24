@@ -1,24 +1,24 @@
 :root {
-    --white: #F1EEF6;
+    --white: #FFF;
     --black: #1E152A;
-    --green: #8CFFBA;
+    --snappire: #293F99;
     --dark-grey: #373E49;
     --grey: #9099AB;
     --red: #FF5A33;
 }
 html{
-    background-color:#1E152A;
+    background-color:#fff;
     margin-top:0
 }
-body,div,#time_trend,#sports_potion_barplot{ background-color:#1E152A;margin:0}
+body{ background-color:#f4f4f4;margin:0}
 body{
     height: 100%;
     width:100%
 }
 h2{
-    color:var(--green);
-    padding-top: 20;
-    text-align: center;
+    color:var(--snappire);
+    padding-left: 10%;
+    text-align: left;
 }
 #table{
     padding-left:5%;
@@ -26,7 +26,52 @@ h2{
 #work_out_intensity_gauge{
     padding-left: 30%;
 }
+
+.container{
+    display: block;
+    margin:  0 auto;
+    width: 1100px;
+}
+.banner{
+    padding-top: 20px;
+    padding-bottom: 20px;    
+    background-color: var(--white);
+    margin-top: 0;
+}
+.subtitle{
+color: var(--black);
+}
 .summary{
-    color:var(--white);
-    padding-left: 30%;
+    background-color:var(--white);
+    margin-top: 20px;
+    width: 22%;
+    color: var(--black);
+    font-size: 1em;
+    font-weight: 200;
+    padding-top: 5%;
+    padding-left: 2%;
+    padding-right: 2%;
+    line-height: 1.3em;
+    text-align: left;
+}
+.stats{
+    padding-top: 10px;
+}
+.statstext{
+    font-weight: 500;
+    line-height: 1.4em;
+    font-size: 1em;
+    /*color:var(--snappire);*/
+}
+.first_chart{
+    margin-top: 20px;
+    margin-left: 20px;
+    /*width: 100%;*/
+}
+
+.second_chart{
+    margin-top: 20px;
+}
+.third_chart{
+margin-top: 20px;
 }
