@@ -35,14 +35,14 @@ def query_date(conn,clickData):
     if clickData:
         sport = clickData['points'][0]['x']
         q = f'''SELECT "Date",
-                    AVG("Reps")AS "Reps Sum",AVG(Weight) AS "Avg Weight"
+                    AVG("Reps")AS "Avg Reps",AVG(Weight) AS "Avg Weight"
                 FROM train_record
                 WHERE "Exercise Name" = "{sport}"
                 GROUP BY "Date"
                 ORDER BY "Date" '''
     else:
         q =  '''SELECT "Date",AVG(Weight) AS 'Avg Weight',
-                    AVG("Reps")AS "Reps Sum"
+                    AVG("Reps")AS "Avg Reps"
                 FROM train_record
                 GROUP BY "Date"
                 ORDER BY "Date" '''
@@ -54,14 +54,14 @@ def query_sport_name(conn,clickData):
     if clickData:
         sport_name = clickData['points'][0]['x']
         q = f'''SELECT "Exercise Name",
-                            sum("Reps")AS "Reps Sum", AVG(Weight) AS "Avg Weight"
+                            sum("Reps")AS "Avg Reps", AVG(Weight) AS "Avg Weight"
                             FROM train_record
                             WHERE "Reps" > 0 AND "Date" = "{sport_name}"
                             GROUP BY "Exercise Name"
                             ORDER BY sum("Reps")DESC '''
     else:
         q = '''SELECT "Exercise Name",
-                            sum("Reps") AS "Reps Sum", AVG(Weight) AS 'Avg Weight'
+                            sum("Reps") AS "Avg Reps", AVG(Weight) AS 'Avg Weight'
                             FROM train_record
                             WHERE "Reps" > 0
                             GROUP BY "Exercise Name"
@@ -135,7 +135,7 @@ def gen_radar():
 
 def get_heatmap_data():
 
-  query='SELECT date(Date) AS Date,strftime("%H",Date) AS Hour, strftime("%w",Date) AS daysofweek, sum("Reps") AS "Reps Sum" \
+  query='SELECT date(Date) AS Date,strftime("%H",Date) AS Hour, strftime("%w",Date) AS daysofweek, sum("Reps") AS "Avg Reps" \
               FROM train_record GROUP BY date(Date),Hour,daysofweek ORDER BY date(Date)'
   heatmap_data = fetch_data(query,conn)
   return heatmap_data
@@ -143,16 +143,16 @@ def get_heatmap_data():
 def gen_heatmap():
   heatmap_source = get_heatmap_data()
   heatmap_source['Date'] = pd.to_datetime(heatmap_source['Date'])
-  heatmap_pivot = pd.pivot_table(heatmap_source,index=['Hour'],columns=['daysofweek'],values=['Reps Sum'],aggfunc='count').fillna(0)
+  heatmap_pivot = pd.pivot_table(heatmap_source,index=['Hour'],columns=['daysofweek'],values=['Avg Reps'],aggfunc='count').fillna(0)
   heatmap_pivot = heatmap_pivot.reset_index()
   fig = go.Figure(data=go.Heatmap(
-                   z=[list(heatmap_pivot.loc[:,('Reps Sum','0')].values),\
-                   list(heatmap_pivot.loc[:,('Reps Sum','1')].values),\
-                   list(heatmap_pivot.loc[:,('Reps Sum','2')].values), \
-                   list(heatmap_pivot.loc[:,('Reps Sum','3')].values),\
-                   list(heatmap_pivot.loc[:,('Reps Sum','4')].values),\
-                   list(heatmap_pivot.loc[:,('Reps Sum','5')].values), \
-                   list(heatmap_pivot.loc[:,('Reps Sum','6')].values)],
+                   z=[list(heatmap_pivot.loc[:,('Avg Reps','0')].values),\
+                   list(heatmap_pivot.loc[:,('Avg Reps','1')].values),\
+                   list(heatmap_pivot.loc[:,('Avg Reps','2')].values), \
+                   list(heatmap_pivot.loc[:,('Avg Reps','3')].values),\
+                   list(heatmap_pivot.loc[:,('Avg Reps','4')].values),\
+                   list(heatmap_pivot.loc[:,('Avg Reps','5')].values), \
+                   list(heatmap_pivot.loc[:,('Avg Reps','6')].values)],
                    x= [str(i) + ':00' for i in heatmap_pivot['Hour'].tolist()], 
                    # x = [str(i) for i in heatmap_pivot.index.get_level_values('weekofmonth').tolist()],
                    y=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday','Saturday','Sunday'],
@@ -210,18 +210,11 @@ def generate_bar_graph(clickData):
       )
     bar.add_trace(
         go.Bar(x=dataframe['Exercise Name'].tolist(),
-               y=dataframe['Reps Sum'].tolist(),
+               y=dataframe['Avg Reps'].tolist(),
                width=0.55,
                marker={'color': color_scheme['cerulean']}),
         secondary_y=False
       ) 
-    # bar.add_trace(
-    #     go.Bar(x=dataframe['Exercise Name'].tolist(),
-    #            y=dataframe['Avg Weight'].tolist(),
-    #            width=0.55,
-    #            marker={'color': color_scheme['dark cerulean']}),
-    #     secondary_y=True
-    #   ) 
 
     bar.update_layout(
       barmode='group',
@@ -241,7 +234,7 @@ def generate_bar_graph(clickData):
                                           'linecolor': color_scheme['black']
                                       },
                                       yaxis={
-                                          'title': 'Reps Sum',
+                                          'title': 'Avg Reps',
                                           'linewidth': 1,
                                           'linecolor': color_scheme['black'],
                                           'tickfont': {
@@ -273,7 +266,7 @@ def update_time_trend(clickData):
     time_fig.add_trace(
         go.Scatter({
             'x': dataframe["Date"].tolist(),
-            'y': dataframe["Reps Sum"].tolist(),
+            'y': dataframe["Avg Reps"].tolist(),
             'type': 'line',
              'mode':"lines",
             'name': 'Avg Reps',
