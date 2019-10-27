@@ -1,15 +1,23 @@
+#This is the main dash app file which contains the database queries,
+# chart configures and layouts. By applying the MVC pattern, each part
+#of code seperated by different functions.
+import os
+
 import dash
 import dash_table
 import dash_daq as daq
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.graph_objs as go
 from dash.dependencies import Input, Output
-import pandas as pd
 from dash_table.Format import Format, Scheme
-from sqlalchemy import create_engine
+
+import plotly.graph_objs as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+
+import pandas as pd
+from flask_caching import Cache
+from sqlalchemy import create_engine
 
 # TODO
 # Unify the languages
@@ -19,9 +27,24 @@ from plotly.subplots import make_subplots
 # Model Code #
 ##############
 
+external_stylesheets = ['https://unpkg.com/purecss@1.0.0/build/pure-min.css']
+
+#initiate the Dash class and server 
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
+
+#create engine to the sqlite database
 conn = create_engine("sqlite:///./train_items.db")
 
+#config cache of the app, and set timeout
+cache = Cache(app.server,config={
+		'CACHE_TYPE':'filesystem',
+		'CACHE_DIR': 'cache-directory'
+	})
+app.config.suppress_callback_exceptions = True
+TIMEOUT=20
 
+# the base fetch data function
 def fetch_data(q: str, conn) -> pd.DataFrame:
     '''
     parm: q - the SQL query
@@ -30,7 +53,8 @@ def fetch_data(q: str, conn) -> pd.DataFrame:
     return pd.read_sql(sql=q, con=conn)
 
 
-def query_date(conn,clickData):
+@cache.memoize(timeout=TIMEOUT)
+def query_date(conn,clickData:dict) -> pd.DataFrame:
     q = ''
     if clickData:
         sport = clickData['points'][0]['x']
@@ -49,7 +73,8 @@ def query_date(conn,clickData):
     return fetch_data(q, conn)
 
 
-def query_sport_name(conn,clickData):
+@cache.memoize(timeout=TIMEOUT)
+def query_sport_name(conn,clickData:dict)-> pd.DataFrame:
     q=''
     if clickData:
         sport_name = clickData['points'][0]['x']
@@ -69,9 +94,53 @@ def query_sport_name(conn,clickData):
     return fetch_data(q, conn)
 
 
+@cache.memoize(timeout=TIMEOUT)
+def generate_fact(conn) -> int:
+    days_query = 'SELECT COUNT(DISTINCT "Date") AS days FROM train_record'
+    days = fetch_data(days_query,conn).at[0,"days"]
+    return days
+
+
+@cache.memoize(timeout=TIMEOUT)
+def get_favorite_excercise(conn) -> str:
+  query = 'SELECT "Exercise Name",COUNT("Exercise Name")\
+                FROM (SELECT date(Date), "Exercise Name"\
+            FROM train_record GROUP BY date(Date), "Exercise Name") \
+            GROUP BY  "Exercise Name" \
+            ORDER BY  COUNT("Exercise Name") DESC'
+  excercise = fetch_data(query,conn).at[0,'Exercise Name']
+  return excercise
+
+
+@cache.memoize(timeout=TIMEOUT)
+def get_favorite_workout_plan(conn) -> str:
+  query = 'SELECT "Workout Name",COUNT("Workout Name")\
+                FROM (SELECT date(Date), "Workout Name"\
+            FROM train_record GROUP BY date(Date), "Workout Name") \
+            GROUP BY  "Workout Name" \
+            ORDER BY  COUNT("Workout Name") DESC'
+  workout = fetch_data(query,conn).at[0,'Workout Name']
+  return workout
+
+
+@cache.memoize(timeout=TIMEOUT)
+def get_max_weight(conn) -> float:
+  query = 'SELECT Weight\
+            FROM train_record ORDER BY Weight DESC'
+  weight = fetch_data(query,conn).at[1,'Weight']
+  return weight
+
+
+@cache.memoize(timeout=TIMEOUT)
+def get_heatmap_data(conn) -> pd.Dataframe:
+  query='SELECT date(Date) AS Date,strftime("%H",Date) AS Hour, strftime("%w",Date) AS daysofweek, sum("Reps") AS "Avg Reps" \
+              FROM train_record GROUP BY date(Date),Hour,daysofweek ORDER BY date(Date)'
+  heatmap_data = fetch_data(query,conn)
+  return heatmap_data
+
 
 ##########
-#  View  #
+#  Views #
 ##########
 
 color_scheme = {
@@ -85,62 +154,7 @@ color_scheme = {
     'grey': '#9099AB',
     'red': '#FF5A33'
 }
-external_stylesheets = ['https://unpkg.com/purecss@1.0.0/build/pure-min.css']
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-server = app.server
-
-
-
-def generate_fact():
-    days_query = 'SELECT COUNT(DISTINCT "Date") AS days FROM train_record'
-    days = fetch_data(days_query,conn).at[0,"days"]
-    return days
-
-def get_favorite_excercise():
-  query = 'SELECT "Exercise Name",COUNT("Exercise Name")\
-                FROM (SELECT date(Date), "Exercise Name"\
-            FROM train_record GROUP BY date(Date), "Exercise Name") \
-            GROUP BY  "Exercise Name" \
-            ORDER BY  COUNT("Exercise Name") DESC'
-  excercise = fetch_data(query,conn).at[0,'Exercise Name']
-  return excercise
-
-def get_favorite_workout_plan():
-  query = 'SELECT "Workout Name",COUNT("Workout Name")\
-                FROM (SELECT date(Date), "Workout Name"\
-            FROM train_record GROUP BY date(Date), "Workout Name") \
-            GROUP BY  "Workout Name" \
-            ORDER BY  COUNT("Workout Name") DESC'
-  workout = fetch_data(query,conn).at[0,'Workout Name']
-  return workout
-
-def get_max_weight():
-  query = 'SELECT Weight\
-            FROM train_record ORDER BY Weight DESC'
-  weight = fetch_data(query,conn).at[1,'Weight']
-  return weight
-
-# def get_
-  
-def gen_radar():
-  df = pd.DataFrame(dict(
-    r=[1, 5, 2, 2, 3],
-    theta=['processing cost','mechanical properties','chemical stability', 
-           'thermal stability', 'device integration']))
-  radar = px.line_polar(df, r='r', theta='theta', line_close=True,width=400,height=300)
-  radar.update_traces(fill='toself')
-  return radar
-
-def get_heatmap_data():
-
-  query='SELECT date(Date) AS Date,strftime("%H",Date) AS Hour, strftime("%w",Date) AS daysofweek, sum("Reps") AS "Avg Reps" \
-              FROM train_record GROUP BY date(Date),Hour,daysofweek ORDER BY date(Date)'
-  heatmap_data = fetch_data(query,conn)
-  return heatmap_data
-
-def gen_heatmap():
+def gen_heatmap() -> go.Figure:
   heatmap_source = get_heatmap_data()
   heatmap_source['Date'] = pd.to_datetime(heatmap_source['Date'])
   heatmap_pivot = pd.pivot_table(heatmap_source,index=['Hour'],columns=['daysofweek'],values=['Avg Reps'],aggfunc='count').fillna(0)
@@ -160,7 +174,8 @@ def gen_heatmap():
                    layout=go.Layout(title='Workout at which time in a day',width=600,height=320))
   return fig
 
-app.layout = html.Div(children=[
+def main_layout() -> html.Div:
+    return html.Div(children=[
   html.Div([
     html.H2(children='Weight Training Analysis'),
     html.H2(children='Workout Dashboard',className='subtitle'),
@@ -192,6 +207,8 @@ app.layout = html.Div(children=[
 
       ])
     
+
+app.layout = main_layout
 
 # CallBacks
 
@@ -258,7 +275,7 @@ def generate_bar_graph(clickData):
 
 
 @app.callback(Output(component_id='time_trend', component_property='figure'), 
-        [Input(component_id='sports_potion_barplot', component_property='clickData')
+        	 [Input(component_id='sports_potion_barplot', component_property='clickData')
 ])
 def update_time_trend(clickData):
     dataframe = query_date(conn,clickData)
@@ -316,10 +333,9 @@ def update_time_trend(clickData):
                          },
                          hovermode='closest')
     if clickData:
-      time_fig.update_layout(title= f"Repeats Trending of {clickData['points'][0]['x']}  ")
+      time_fig.update_layout(title= f"Repeats Trending of {clickData['points'][0]['x']}")
     return time_fig
 
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
