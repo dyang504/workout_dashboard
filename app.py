@@ -132,7 +132,7 @@ def get_max_weight(conn) -> float:
 
 
 @cache.memoize(timeout=TIMEOUT)
-def get_heatmap_data(conn) -> pd.Dataframe:
+def get_heatmap_data(conn) -> pd.DataFrame:
   query='SELECT date(Date) AS Date,strftime("%H",Date) AS Hour, strftime("%w",Date) AS daysofweek, sum("Reps") AS "Avg Reps" \
               FROM train_record GROUP BY date(Date),Hour,daysofweek ORDER BY date(Date)'
   heatmap_data = fetch_data(query,conn)
@@ -155,7 +155,7 @@ color_scheme = {
     'red': '#FF5A33'
 }
 def gen_heatmap() -> go.Figure:
-  heatmap_source = get_heatmap_data()
+  heatmap_source = get_heatmap_data(conn)
   heatmap_source['Date'] = pd.to_datetime(heatmap_source['Date'])
   heatmap_pivot = pd.pivot_table(heatmap_source,index=['Hour'],columns=['daysofweek'],values=['Avg Reps'],aggfunc='count').fillna(0)
   heatmap_pivot = heatmap_pivot.reset_index()
@@ -186,9 +186,9 @@ def main_layout() -> html.Div:
                                               of a Strong App user, showing instense, frequence, \
                                               and preference of taining in a 3 years time interval. "),
                           html.Div([
-                                 html.Div(f"The favorite exercise: {get_favorite_excercise()}", className='statstext'),
-                                 html.Div(f"The favorite Workout Plan: {get_favorite_workout_plan()}", className='statstext'),
-                                 html.Div(f"The max lift weight: {get_max_weight():.0f} lb", className='statstext')
+                                 html.Div(f"The favorite exercise: {get_favorite_excercise(conn)}", className='statstext'),
+                                 html.Div(f"The favorite Workout Plan: {get_favorite_workout_plan(conn)}", className='statstext'),
+                                 html.Div(f"The max lift weight: {get_max_weight(conn):.0f} lb", className='statstext')
                             ],className='stats')
                            
                            ], className='pure-u-1-5 summary'),
